@@ -19,6 +19,7 @@ port = 12346
 s.bind(("192.168.43.153", port))
 
 #Prepare a .csv for saving data
+os.chdir("/home/pi/Desktop/Final Project/Data")
 vers = str(random.random())[2:]
 # client, addr = s.accept()
 # client.send(vers)
@@ -97,6 +98,7 @@ GPIO.setup(GPIO_ECHO, GPIO.IN)
 GPIO.output(GPIO_TRIGGER, False)
 print("Waiting for sensor to settle..")
 time.sleep(10)
+
 
 #adxl345 stuff
 # select the correct i2c bus for this revision of Raspberry Pi
@@ -199,17 +201,14 @@ def vibration_sensor():
     def callback(channel):
             vibration_state = 1
             if GPIO.input(channel):
-                    print "Movement Detected!"
+                    print("Movement Detected!")
             else:
-                    print "Movement Detected!"
+                    print("Movement Detected!")
      
     GPIO.add_event_detect(channel, GPIO.BOTH, bouncetime=300)  # let us know when the pin goes HIGH or LOW
     GPIO.add_event_callback(channel, callback)  # assign function to GPIO PIN, Run function on change
     return(vibration_state)
  
-# infinite loop
-while True:
-        time.sleep(1)
 
 if __name__ == '__main__':
     try:
@@ -221,7 +220,7 @@ if __name__ == '__main__':
 
             #Read temperature
             temp = read_temp()
-            print ("Temperature is %.2f ", % temp)
+            print (("Temperature is %.2f ") % (temp))
             data.append(temp)
 
             adxl345 = ADXL345()

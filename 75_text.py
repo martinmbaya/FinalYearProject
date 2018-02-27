@@ -28,12 +28,26 @@ vers = str(random.random())[2:]
 # client.send(vers)
 name = "project_data_"+vers+".csv"
 file_content = open(name, "w")
-TitleRow = "Distance, Temperature, X_Axis, Y_Axis, Z_Axis, Vibration_state\n"
+TitleRow = "Distance1, Distance2, Temperature, X_Axis, Y_Axis, Z_Axis, Vibration_state\n"
 file_content.write(TitleRow)
 
+class myThread(threading.Thread):
+    def __init__(self, sensorID, trigger, echo, data):
+        threading.Thread.__init__(self)
+        self.sensorID = sensorID
+        self.trigger = trigger
+        self.echo = echo
+        self.data = data
+    def run(self):
+        print ("\nStarting distance sensor " +self.sensorID)
+        #Now get the lock to synchronize threads
+        threadLock.acquire()
+        distance(self.sensorID, self.trigger, self.echo, self.data)
+        #Free lock to release next thread
+        threadLock.release()
 
-def distance():
-    print("Attempting..")
+def distance(sensorID, GPIO_TRIGGER, GPIO_ECHO, data):
+    print("Acquiring data from %s", sensorID)
     #set Trigger to HIGH
     GPIO.output(GPIO_TRIGGER, True)
 
@@ -57,8 +71,8 @@ def distance():
     #multiply with the sonic speed (34300 cm/s)
     #and divide by 2, because it's to and from
     distance = (TimeElapsed * 34300) / 2
-    print(("Distance is %f : ") %(distance))
-    return distance
+    print ("Measured Distance %s = %f cm" % (sensorID, distance))
+    data.append(distance)
 
 
 #Stuff for thermometer
@@ -220,9 +234,24 @@ if __name__ == '__main__':
     try:
         s.listen(5)
         while True:
+            threads = []
             data = []
-            dist = distance()
-            data.append(dist)
+
+            #Create threads for measuring the two distances
+            Thread1 = mythread(1, GPIO_TRIGGER, GPIO_ECHO, data)
+            Thread2 = mythread(2, GPIO_TRIGGER2, GPIO_ECHO2, data)
+
+            #Start the new threads
+            Thread1.start()
+            Thread2.start()
+
+            #Add the threads to thread list
+            threads.append(Thread1)
+            threads.append(Thread2)
+
+            #Wait for all threads to complete
+            for t in threads:
+                t.join()
 
             #Read temperature
             temp = read_temp()
